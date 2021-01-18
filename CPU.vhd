@@ -6,7 +6,6 @@ entity CPU is
 	
     port (
 		clk,rst    : IN std_logic ; 
-		
 		data_bus : INOUT std_logic_vector (15 downto 0)
     );
 end CPU;
@@ -43,6 +42,30 @@ component ALU_n is
 		Cin  : in  std_logic;
 		Cout: out std_logic;
         F   : out std_logic_vector (n-1 downto 0));
+end component;
+
+component decoder_4 is 
+    port(
+        S : in  std_logic_vector (1 downto 0);
+        A : out std_logic_vector (3 downto 0);
+        e : in  std_logic
+    );
+end component;
+
+component decoder_8 is 
+    port(
+        S : in  std_logic_vector (2 downto 0);
+        A : out std_logic_vector (7 downto 0);
+        e : in  std_logic
+    );
+end component;
+
+component decoder_16 is 
+    port(
+        S : in  std_logic_vector (3 downto 0);
+        A : out std_logic_vector (15 downto 0);
+        e : in  std_logic
+    );
 end component;
 
 component register_1 is
@@ -101,7 +124,7 @@ signal R4_en_in : std_logic;
 signal R5_en_in : std_logic;
 signal R6_en_in : std_logic;
 signal R7_en_in : std_logic;
-signal IP_en_in : std_logic;
+signal IR_en_in : std_logic;
 signal Temp_en_in : std_logic;
 signal Y_en_in : std_logic;
 signal Z_en_in : std_logic;
@@ -126,7 +149,7 @@ signal R4_en_out : std_logic;
 signal R5_en_out : std_logic;
 signal R6_en_out : std_logic;
 signal R7_en_out : std_logic;
-signal IP_en_out : std_logic;
+signal IR_offset_en_out : std_logic;
 signal Temp_en_out : std_logic;
 signal Z_en_out : std_logic;
 signal MDR_en_out : std_logic;
@@ -145,7 +168,7 @@ signal R4_out : std_logic_vector(15 downto 0);
 signal R5_out : std_logic_vector(15 downto 0);
 signal R6_out : std_logic_vector(15 downto 0);
 signal R7_out : std_logic_vector(15 downto 0);
-signal IP_out : std_logic_vector(15 downto 0);
+signal IR_out : std_logic_vector(15 downto 0);
 signal Temp_out : std_logic_vector(15 downto 0);
 signal Y_out : std_logic_vector(15 downto 0);
 signal Z_out : std_logic_vector(15 downto 0);
@@ -167,7 +190,31 @@ signal ZeroF : std_logic;
 signal SignF : std_logic;
 signal Fout : std_logic_vector(15 downto 0);
 signal Carryout : std_logic;
-signal ALU_S : std_logic_vector(4 downto 0);
+--signal ALU_S : std_logic_vector(4 downto 0);
+
+-- Operation
+signal F0_next_address : std_logic_vector(7 downto 0);
+signal F1_reg_out	: std_logic_vector(3 downto 0);	
+signal F2_reg_in	: std_logic_vector(2 downto 0);	
+signal F3_reg_in2	: std_logic_vector(1 downto 0);	
+signal F5_ALU_S	: std_logic_vector(4 downto 0);
+signal F6_write : std_logic;
+signal F6_read : std_logic;
+signal F7_WMFC : std_logic;
+signal F8_ORing : std_logic_vector(2 downto 0);	
+signal F9_PLA_out : std_logic;
+signal F10_HLT : std_logic;
+signal F11_end : std_logic;
+
+signal IR_offset_out : std_logic_vector(15 downto 0);	
+
+signal F1_reg_out_dec_en : std_logic;
+signal F2_reg_in_dec_en : std_logic;
+signal F3_reg_in2_dec_en : std_logic;
+
+signal F1_reg_out_en : std_logic_vector(15 downto 0);
+signal F2_reg_in_en : std_logic_vector(7 downto 0);
+signal F3_reg_in2_en : std_logic_vector(3 downto 0);
 
 
 begin
@@ -189,7 +236,7 @@ begin
     tri_R6:   tristate_n   port map( R6_out ,data_bus ,R6_en_out);
     tri_R7:   tristate_n   port map( R7_out ,data_bus ,R7_en_out);
 	
-	tri_IP:   tristate_n   port map(IP_out, data_bus, IP_en_out); -- there is ip out?
+	tri_IR_offset:   tristate_n   port map(IR_offset_out, data_bus, IR_offset_en_out); 
 	
 	tri_Temp: tristate_n   port map(Temp_out, data_bus, Temp_en_out);
     tri_Z:    tristate_n   port map(Z_out, data_bus,z_en_out );
@@ -209,7 +256,7 @@ begin
     R5:   register_n    port map(data_bus,R5_out,clk,R5_en_in,rst);
     R6:   register_n    port map(data_bus,R6_out,clk,R6_en_in,rst);
     R7:   register_n    port map(data_bus,R7_out,clk,R7_en_in,rst);
-    IP:   register_n    port map(data_bus,IP_out,clk,IP_en_in,rst);
+    IR:   register_n    port map(data_bus,IR_out,clk,IR_en_in,rst);
     Temp: register_n    port map(data_bus,Temp_out,clk,Temp_en_in,rst);
     Y:    register_n    port map(data_bus,Y_out,clk,Y_en_in,rst);
 	Z:    register_n    port map(Fout,Z_out,clk,Z_en_in,rst);
@@ -222,14 +269,60 @@ begin
 
 	Creg: register_1 port map(Carryout, CarryF,clk, Z_en_in, rst);
 
-	my_ALU: ALU_n 	port map(Y_out, data_bus, ALU_S, CarryF, Carryout, Fout);
+	our_ALU: ALU_n 	port map(Y_out, data_bus, F5_ALU_S, CarryF, Carryout, Fout);
 
 	SignF <= Z_out(15);
 	ZeroF <=
 				'1' 	when   to_integer(unsigned(Z_out))=0
 				else 	'0';
 
+	-- operatiom
+	F0_next_address <= rom_data_out(31 downto 24);
+	F1_reg_out	<= rom_data_out(23 downto 20);	
+	F2_reg_in	<= rom_data_out(19 downto 17);	
+	F3_reg_in2	<= rom_data_out(16 downto 15);	
+	Y_en_in <= rom_data_out(14);
+	F5_ALU_S	<= rom_data_out(13 downto 9);
+	memory_write_signal <= rom_data_out(8);
+	memory_read_signal  <= rom_data_out(7);
+	F7_WMFC <= rom_data_out(6);
+	F8_ORing <= rom_data_out(5 downto 3);	
+	F9_PLA_out <= rom_data_out(2);
+	F10_HLT <= rom_data_out(1);
+	F11_end <= rom_data_out(0);
+	
 
+	F1_reg_out_dec_en <= '1';
+	F1_reg_out_dec : decoder_16 port map (F1_reg_out, F1_reg_out_en, F1_reg_out_dec_en);
+
+	IR_offset_out <= IR_out and (15 downto 9 => '0', 8 downto 0 => '1');
+	R7_en_out <= F1_reg_out_en(1);
+	MDR_en_out <= F1_reg_out_en(2);
+	Z_en_out <= F1_reg_out_en(3);
+	Temp_en_out <= F1_reg_out_en(7);
+	IR_offset_en_out <= F1_reg_out_en(8);
+
+	F2_reg_in_dec_en <= '1';
+	F2_reg_in_dec : decoder_8 port map (F2_reg_in, F2_reg_in_en, F2_reg_in_dec_en);
+
+	R7_en_in <= '0' or F2_reg_in_en(1); -- PLAAAAAAAAA out
+	IR_en_in <= F2_reg_in_en(2);
+	Z_en_in <= F2_reg_in_en(3);
+
+	F3_reg_in2_dec_en <= '1';
+	F3_reg_in2_dec : decoder_4 port map (F3_reg_in2, F3_reg_in2_en, F3_reg_in2_dec_en);
+	MAR_en_in <= F3_reg_in2_en(1);
+	MDR_en_in <= F3_reg_in2_en(2);
+	Temp_en_in <= F3_reg_in2_en(3);
+
+
+	-- R0_en_in : std_logic;
+	-- R1_en_in : std_logic;
+	-- R2_en_in : std_logic;
+	-- R3_en_in : std_logic;
+	-- R4_en_in : std_logic;
+	-- R5_en_in : std_logic;
+	-- R6_en_in : std_logic;
 end CPU_arch ; 
 
 

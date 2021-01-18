@@ -1,15 +1,15 @@
 Library ieee;
 use ieee.std_logic_1164.all;
 
-entity decoder is 
+entity decoder_4 is 
     port(
         S : in  std_logic_vector (1 downto 0);
         A : out std_logic_vector (3 downto 0);
         e : in  std_logic
     );
-end decoder;
+end decoder_4;
 
-architecture decoder_arch of decoder is
+architecture decoder_4_arch of decoder_4 is
 begin
     process(S, e)
     begin
@@ -25,4 +25,4 @@ begin
             A <= "1000";
         end if;
     end process;
-end decoder_arch ; -- decoder_arch
+end decoder_4_arch ; -- decoder_arch
