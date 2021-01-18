@@ -15,7 +15,7 @@ ENTITY ram IS
 END ENTITY ram;
 
 ARCHITECTURE syncrama OF ram IS
-
+	--0001111010110000
 	TYPE ram_type IS ARRAY(0 TO 2**16 -1) OF std_logic_vector(15 DOWNTO 0);
 	SIGNAL ram : ram_type := (
         0=>"0001111010110000",
