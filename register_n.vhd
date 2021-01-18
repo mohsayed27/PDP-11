@@ -2,7 +2,7 @@ Library ieee;
 use ieee.std_logic_1164.all;
 
 entity register_n is
-	generic (n: integer:=32); 
+	generic (n: integer:=16); 
 	port ( 
         D : in  std_logic_vector (n-1 downto 0);
         Q : out std_logic_vector (n-1 downto 0);
