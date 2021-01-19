@@ -6,6 +6,8 @@ entity PLA_ALL is
     port (
         F8: in std_logic_vector(2 downto 0); -- Control word
         F9: in std_logic; -- Control word
+        F10: in std_logic; -- Control word
+        F11: in std_logic; -- Control word
         zero_flag, sign_flag, carry_flag: in std_logic;
         IR: in std_logic_vector(15 downto 0);
         address_out: out std_logic_vector(7 downto 0)
@@ -223,6 +225,7 @@ begin
                 F8_or_operation when F8 = "101" else 
                 F8_or_direct_reg when F8 = "110";
 
-    address_out <= F8_out or F9_out;
+    address_out <= F8_out or F9_out when F11 = '0'
+                else "00000000";
 
 end PLA_ALL_arch;

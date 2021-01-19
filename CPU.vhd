@@ -317,7 +317,7 @@ begin
 	F10_HLT <= rom_data_out(1);
 	F11_end <= rom_data_out(0);
 	
-	our_PLA: PLA_ALL port map(F8_ORing,F9_PLA_out,ZeroF,SignF,CarryF, IR_out, PLA_address_out);
+	our_PLA: PLA_ALL port map(F8_ORing,F9_PLA_out,F10_HLT, F11_end,ZeroF,SignF,CarryF, IR_out, PLA_address_out);
 
 	F1_reg_out_dec_en <= '1';
 	F1_reg_out_dec : decoder_16 port map (F1_reg_out, F1_reg_out_en, F1_reg_out_dec_en);
