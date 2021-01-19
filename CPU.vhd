@@ -348,7 +348,8 @@ begin
 	MDR_en_in <= F3_reg_in2_en(2);
 	Temp_en_in <= F3_reg_in2_en(3);
 
-	rom_addr <= F0_next_address or PLA_address_out; 
+	rom_addr <= F0_next_address or PLA_address_out when rst ='0'
+				else "00000000"; 
 
 
 	Rsrc_S <= IR_out(11 downto 9);
