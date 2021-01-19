@@ -205,7 +205,7 @@ signal CarryF : std_logic;
 signal ZeroF : std_logic;
 signal SignF : std_logic;
 signal Fout : std_logic_vector(15 downto 0);
-signal Carryout,ZeroFlag, SignFlag, flag1, flag2 : std_logic;
+signal Carryout,ZeroFlag, SignFlag : std_logic;
 --signal ALU_S : std_logic_vector(4 downto 0);
 
 -- Operation
@@ -293,13 +293,8 @@ begin
 
 	-- ALU 
 
-	flag1 <=  '1'  when rom_addr = "00000000"
-	else '0';
-
-	flag2 <= '0' when F5_ALU_S = "00000"
-	else '1';
-	Freg_en <=  '1' when flag2 = '1' and flag1 = '0'
- 	else '0';
+	Freg_en <= '0' when F5_ALU_S = "00000" or rom_addr = "00000000"
+ 	else '1';
 	Creg: register_1 port map(Carryout, CarryF,clk, Freg_en, rst);
 	Zreg: register_1 port map(ZeroFlag, ZeroF,clk, Freg_en, rst);
 	Sreg: register_1 port map(SignFlag, SignF,clk, Freg_en, rst);
