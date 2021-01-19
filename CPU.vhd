@@ -205,7 +205,7 @@ signal CarryF : std_logic;
 signal ZeroF : std_logic;
 signal SignF : std_logic;
 signal Fout : std_logic_vector(15 downto 0);
-signal Carryout : std_logic;
+signal Carryout,ZeroFlag, SignFlag : std_logic;
 --signal ALU_S : std_logic_vector(4 downto 0);
 
 -- Operation
@@ -239,7 +239,7 @@ signal F3_reg_in2_en : std_logic_vector(3 downto 0);
 
 signal Src_reg_in, Src_reg_out, Dest_reg_in, Dest_reg_out : std_logic_vector(7 downto 0);
 
-signal not_clk : std_logic;
+signal not_clk, Freg_en : std_logic;
 
 begin
 	rom_we <= '0';
@@ -293,12 +293,16 @@ begin
 
 	-- ALU 
 
-	Creg: register_1 port map(Carryout, CarryF,clk, Z_en_in, rst);
+	Freg_en <= '0' when F5_ALU_S = "00000" or rom_addr = "00000000"
+ 	else '1';
+	Creg: register_1 port map(Carryout, CarryF,clk, Freg_en, rst);
+	Zreg: register_1 port map(ZeroFlag, ZeroF,clk, Freg_en, rst);
+	Sreg: register_1 port map(SignFlag, SignF,clk, Freg_en, rst);
 
 	our_ALU: ALU_n 	port map(Y_out, data_bus, F5_ALU_S, CarryF, Carryout, Fout);
 
-	SignF <= Z_out(15);
-	ZeroF <=
+	SignFlag <= Z_out(15);
+	ZeroFlag <=
 				'1' 	when   to_integer(unsigned(Z_out))=0
 				else 	'0';
 
