@@ -115,6 +115,16 @@ component register_MDR is
         rst : in  std_logic  );
 end component;
 
+component PLA_ALL is 
+    port (
+        F8: in std_logic_vector(2 downto 0); -- Control word
+        F9: in std_logic; -- Control word
+        zero_flag, sign_flag, carry_flag: in std_logic;
+        IR: in std_logic_vector(15 downto 0);
+        address_out: out std_logic_vector(7 downto 0)
+    );
+
+end component;
 
 signal R0_en_in : std_logic;
 signal R1_en_in : std_logic;
@@ -176,6 +186,10 @@ signal MDR_out : std_logic_vector(15 downto 0);
 signal MAR_out : std_logic_vector(15 downto 0);
 signal MDR_in : std_logic_vector(15 downto 0);
 
+signal Rsrc_S : std_logic_vector(2 downto 0);
+signal Rdest_S : std_logic_vector(2 downto 0);
+signal Rsrc_en_out, Rsrc_en_in, Rdest_en_out, Rdest_en_in : std_logic;
+
 signal ram_data_out : std_logic_vector(15 downto 0);
 signal ram_data_in : std_logic_vector(15 downto 0);
 
@@ -208,6 +222,8 @@ signal F11_end : std_logic;
 
 signal IR_offset_out : std_logic_vector(15 downto 0);	
 
+signal PLA_address_out: std_logic_vector(7 downto 0);
+
 signal rom_out_inside : std_logic_vector(31 downto 0);	
 
 signal F1_reg_out_dec_en : std_logic;
@@ -218,6 +234,8 @@ signal F1_reg_out_en : std_logic_vector(15 downto 0);
 signal F2_reg_in_en : std_logic_vector(7 downto 0);
 signal F3_reg_in2_en : std_logic_vector(3 downto 0);
 
+
+signal Src_reg_in, Src_reg_out, Dest_reg_in, Dest_reg_out : std_logic_vector(7 downto 0);
 
 signal not_clk : std_logic;
 
@@ -283,6 +301,8 @@ begin
 				else 	'0';
 
 	-- operatiom
+
+	
 	F0_next_address <= rom_data_out(31 downto 24);
 	F1_reg_out	<= rom_data_out(23 downto 20);	
 	F2_reg_in	<= rom_data_out(19 downto 17);	
@@ -297,23 +317,28 @@ begin
 	F10_HLT <= rom_data_out(1);
 	F11_end <= rom_data_out(0);
 	
+	our_PLA: PLA_ALL port map(F8_ORing,F9_PLA_out,ZeroF,SignF,CarryF, IR_out, PLA_address_out);
 
 	F1_reg_out_dec_en <= '1';
 	F1_reg_out_dec : decoder_16 port map (F1_reg_out, F1_reg_out_en, F1_reg_out_dec_en);
 
 	IR_offset_out <= IR_out and (15 downto 9 => '0', 8 downto 0 => '1');
-	R7_en_out <= F1_reg_out_en(1);
+	R7_en_out <= Src_reg_out(7) or Dest_reg_out(7) or F1_reg_out_en(1); -- PLAAAAAAAA
 	MDR_en_out <= F1_reg_out_en(2);
 	Z_en_out <= F1_reg_out_en(3);
+	Rsrc_en_out <=  F1_reg_out_en(4);
+	Rdest_en_out <=  F1_reg_out_en(5);
 	Temp_en_out <= F1_reg_out_en(7);
 	IR_offset_en_out <= F1_reg_out_en(8);
 
 	F2_reg_in_dec_en <= '1';
 	F2_reg_in_dec : decoder_8 port map (F2_reg_in, F2_reg_in_en, F2_reg_in_dec_en);
 
-	R7_en_in <= '0' or F2_reg_in_en(1); -- PLAAAAAAAAA out
+	R7_en_in <= Src_reg_in(7) or Dest_reg_in(7) or F2_reg_in_en(1); -- PLAAAAAAAAA out
 	IR_en_in <= F2_reg_in_en(2);
 	Z_en_in <= F2_reg_in_en(3);
+	Rsrc_en_in <= F2_reg_in_en(4);
+	Rdest_en_in <= F2_reg_in_en(5);
 
 	F3_reg_in2_dec_en <= '1';
 	F3_reg_in2_dec : decoder_4 port map (F3_reg_in2, F3_reg_in2_en, F3_reg_in2_dec_en);
@@ -321,14 +346,38 @@ begin
 	MDR_en_in <= F3_reg_in2_en(2);
 	Temp_en_in <= F3_reg_in2_en(3);
 
+	rom_addr <= F0_next_address or PLA_address_out; 
 
-	-- R0_en_in : std_logic;
-	-- R1_en_in : std_logic;
-	-- R2_en_in : std_logic;
-	-- R3_en_in : std_logic;
-	-- R4_en_in : std_logic;
-	-- R5_en_in : std_logic;
-	-- R6_en_in : std_logic;
+
+	Rsrc_S <= IR_out(11 downto 9);
+	Rdest_S <= IR_out(5 downto 3);
+
+	Src_reg_in_dec : decoder_8 port map (Rsrc_S ,Src_reg_in, Rsrc_en_in);
+
+	Dest_reg_in_dec : decoder_8 port map (Rdest_S ,Dest_reg_in, Rdest_en_in);
+
+	Src_reg_out_dec : decoder_8 port map (Rsrc_S ,Src_reg_out, Rsrc_en_out);
+
+	Dest_reg_out_dec : decoder_8 port map (Rdest_S ,Dest_reg_out, Rdest_en_out);
+
+
+	R0_en_in <= Src_reg_in(0) or Dest_reg_in(0);
+	R1_en_in <= Src_reg_in(1) or Dest_reg_in(1);
+	R2_en_in <= Src_reg_in(2) or Dest_reg_in(2);
+	R3_en_in <= Src_reg_in(3) or Dest_reg_in(3);
+	R4_en_in <= Src_reg_in(4) or Dest_reg_in(4);
+	R5_en_in <= Src_reg_in(5) or Dest_reg_in(5);
+	R6_en_in <= Src_reg_in(6) or Dest_reg_in(6);
+	
+
+	R0_en_out <= Src_reg_out(0) or Dest_reg_out(0);
+	R1_en_out <= Src_reg_out(1) or Dest_reg_out(1);
+	R2_en_out <= Src_reg_out(2) or Dest_reg_out(2);
+	R3_en_out <= Src_reg_out(3) or Dest_reg_out(3);
+	R4_en_out <= Src_reg_out(4) or Dest_reg_out(4);
+	R5_en_out <= Src_reg_out(5) or Dest_reg_out(5);
+	R6_en_out <= Src_reg_out(6) or Dest_reg_out(6);
+
 end CPU_arch ; 
 
 
