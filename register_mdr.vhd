@@ -15,16 +15,23 @@ end register_MDR;
 
 architecture reg_mdr_arch of register_MDR is
 begin
-    process(clk, rst)
+    process(clk, rst,d_ram )
     begin
+        if en_ram ='1' then
+            q <= d_ram;
+        end if;
         if rst = '1' then
             q <= (others=> '0'); 
-        elsif rising_edge(clk) and en_ram = '1' then
-            q <= d_ram;
+        --elsif rising_edge(clk) and en_ram = '1' then
+            --q <= d_ram;
         elsif rising_edge(clk) and en_bus = '1' then
             q <= d_bus;
         end if;
     end process;
+
+    
+    --q <= d_ram when en_ram = '1';
+
 end reg_mdr_arch ; -- reg_mdr_arch
 
 

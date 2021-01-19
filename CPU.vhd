@@ -208,6 +208,8 @@ signal F11_end : std_logic;
 
 signal IR_offset_out : std_logic_vector(15 downto 0);	
 
+signal rom_out_inside : std_logic_vector(31 downto 0);	
+
 signal F1_reg_out_dec_en : std_logic;
 signal F2_reg_in_dec_en : std_logic;
 signal F3_reg_in2_dec_en : std_logic;
@@ -217,15 +219,17 @@ signal F2_reg_in_en : std_logic_vector(7 downto 0);
 signal F3_reg_in2_en : std_logic_vector(3 downto 0);
 
 
+signal not_clk : std_logic;
+
 begin
 	rom_we <= '0';
     not_memory_read_signal <= not memory_read_signal;
-
+	not_clk <= not clk;
 	--d_dest: my_decoder port map(destInp(1 downto 0),e_dest,en_reg);
 	--d_src:  my_decoder port map(srcInp(1 downto 0),e_src,en_tristate);
 	
 	our_ram : ram port map( clk , memory_write_signal , MAR_out , MDR_out , ram_data_out);
-	our_rom: rom port map(clk, rom_we, rom_addr, rom_data_in, rom_data_out);
+	our_rom: rom port map(clk, rom_we, rom_addr, rom_data_in, rom_out_inside);
 
     tri_R0:   tristate_n   port map( R0_out ,data_bus ,R0_en_out);
     tri_R1:   tristate_n   port map( R1_out ,data_bus ,R1_en_out);
@@ -264,6 +268,8 @@ begin
 	MDR:  register_MDR  port map(ram_data_out,data_bus,MDR_out,clk,memory_read_signal ,MDR_en_in ,rst);
 	
 	MAR:  register_n    port map(data_bus,MAR_out,clk,MAR_en_in,rst);
+
+	Rom_out_register:  register_n generic map(32) port map(rom_out_inside , rom_data_out , not_clk ,'1' ,rst);
 
 	-- ALU 
 
