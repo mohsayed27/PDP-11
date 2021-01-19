@@ -329,7 +329,7 @@ begin
 
 	SF <= Flags_out(1);
 	ZF <= Flags_out(0);
-	CF <= Flag_out(2);
+	CF <= Flags_out(2);
 	our_PLA: PLA_ALL port map(F8_ORing,F9_PLA_out,F10_HLT, F11_end,ZF,SF,CF, IR_out, PLA_address_out);
 
 	F1_reg_out_dec_en <= '1';
