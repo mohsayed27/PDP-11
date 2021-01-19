@@ -116,9 +116,11 @@ component register_MDR is
 end component;
 
 component PLA_ALL is 
-    port (
+     port (
         F8: in std_logic_vector(2 downto 0); -- Control word
         F9: in std_logic; -- Control word
+        F10: in std_logic; -- Control word
+        F11: in std_logic; -- Control word
         zero_flag, sign_flag, carry_flag: in std_logic;
         IR: in std_logic_vector(15 downto 0);
         address_out: out std_logic_vector(7 downto 0)
