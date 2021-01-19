@@ -135,6 +135,7 @@ architecture PLA_ALL_arch of PLA_ALL is
 
     signal src_add_mode, dst_add_mode: std_logic_vector(2 downto 0);
     signal most_sig_4: std_logic_vector(3 downto 0);
+    signal two_op: std_logic;
     signal no_op: std_logic;
     signal one_op: std_logic;
     signal one_op_br: std_logic;
@@ -160,6 +161,7 @@ begin
     dst_add_mode <= IR(2 downto 0);
     most_sig_4 <= IR(15 downto 12);
 
+    two_op <= not (most_sig_4(3) and most_sig_4(2) );
     no_op <= '1' when most_sig_4 = "1111" else '0';
     one_op_br <= '1' when most_sig_4 = "1110" else '0';
     one_op <= '1' when most_sig_4(3 downto 1) = "110" else '0';
@@ -199,12 +201,16 @@ begin
                             or (br_code = "110" and (carry_flag = '1' or zero_flag = '1'))
                             else ("00" & O"10");  
 
-    F8_or_operation(7) <= '0';
-    F8_or_operation(6) <= '0' when no_op = '0' and one_op = '0' and one_op_br = '0' else -- 2 op
-                          '1' when one_op = '1';
-    F8_or_operation(5 downto 4) <= "00";
-    F8_or_operation(3 downto 0) <= IR(15 downto 12) when no_op = '0' and one_op = '0' and one_op_br = '0' else -- 2 op
-                                   IR(12 downto 9) when one_op = '1';
+    
+    F8_or_operation(7) <= '1' when   one_op = '1' else '0';
+    F8_or_operation(6 downto 4) <= "000";
+    F8_or_operation(3 downto 0) <=  IR(15 downto 12) when two_op = '1' else   IR(12 downto 9)    ;
+    -- F8_or_operation(7) <= '0';
+    -- F8_or_operation(6) <= '0' when no_op = '0' and one_op = '0' and one_op_br = '0' else -- 2 op
+    --                       '1' when one_op = '1';
+    -- F8_or_operation(5 downto 4) <= "00";
+    -- F8_or_operation(3 downto 0) <= IR(15 downto 12) when no_op = '0' and one_op = '0' and one_op_br = '0' else -- 2 op
+    --                                IR(12 downto 9) when one_op = '1';
 
     F8_or_direct_reg(7 downto 1) <= "0000000";
     F8_or_direct_reg(0) <= '1' when dst_add_mode = "000" else '0';
