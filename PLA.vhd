@@ -207,7 +207,7 @@ begin
     -- F8_or_operation(7) <= '1' when   one_op = '1' else '0';
     -- F8_or_operation(6 downto 4) <= "000";
     -- F8_or_operation(3 downto 0) <=  IR(15 downto 12) when two_op = '1' else   IR(12 downto 9)    ;
-    -- F8_or_operation(7) <= '0';
+    F8_or_operation(7) <= '0';
     F8_or_operation(6) <= '0' when no_op = '0' and one_op = '0' and one_op_br = '0' else -- 2 op
                           '1' when one_op = '1';
     F8_or_operation(5 downto 4) <= "00";
