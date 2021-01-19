@@ -226,7 +226,8 @@ begin
                 F8_or_direct_reg when F8 = "110";
 
     F8_enable <=   F8(0) or F8(1) or F8(2); 
-    address_out <= F8_out or F9_out when (F9 = '1' or F8_enable = '1')
+    address_out <= F8_out       when  F8_enable = '1'
+                else F9_out    when F9 = '1'
                 else "00000000";
 
 end PLA_ALL_arch;
