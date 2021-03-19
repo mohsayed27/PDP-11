@@ -241,17 +241,22 @@ signal F3_reg_in2_en : std_logic_vector(3 downto 0);
 
 signal Src_reg_in, Src_reg_out, Dest_reg_in, Dest_reg_out : std_logic_vector(7 downto 0);
 
+signal clk_hlted: std_logic;
+
 signal not_clk : std_logic;
 
 begin
+
+	clk_hlted <= clk when F10_HLT = '0' else '0';
+
 	rom_we <= '0';
     not_memory_read_signal <= not memory_read_signal;
-	not_clk <= not clk;
+	not_clk <= not clk_hlted;
 	--d_dest: my_decoder port map(destInp(1 downto 0),e_dest,en_reg);
 	--d_src:  my_decoder port map(srcInp(1 downto 0),e_src,en_tristate);
 	
-	our_ram : ram port map( clk , memory_write_signal , MAR_out , MDR_out , ram_data_out);
-	our_rom: rom port map(clk, rom_we, rom_addr, rom_data_in, rom_out_inside);
+	our_ram : ram port map(clk_hlted , memory_write_signal , MAR_out , MDR_out , ram_data_out);
+	our_rom: rom port map(clk_hlted, rom_we, rom_addr, rom_data_in, rom_out_inside);
 
     tri_R0:   tristate_n   port map( R0_out ,data_bus ,R0_en_out);
     tri_R1:   tristate_n   port map( R1_out ,data_bus ,R1_en_out);
@@ -274,22 +279,22 @@ begin
 	--tri_MDR_en_ram:  tristate_single   port map( memory_read_signal, MDR_en_in_inside, memory_read_signal);
 	--tri_MDR_en_bus:  tristate_single   port map( MDR_en_in , MDR_en_in_inside, not_memory_read_signal);
 
-    R0:   register_n    port map(data_bus,R0_out,clk,R0_en_in,rst);
-    R1:   register_n    port map(data_bus,R1_out,clk,R1_en_in,rst);
-    R2:   register_n    port map(data_bus,R2_out,clk,R2_en_in,rst);
-    R3:   register_n    port map(data_bus,R3_out,clk,R3_en_in,rst);
-    R4:   register_n    port map(data_bus,R4_out,clk,R4_en_in,rst);
-    R5:   register_n    port map(data_bus,R5_out,clk,R5_en_in,rst);
-    R6:   register_n    port map(data_bus,R6_out,clk,R6_en_in,rst);
-    R7:   register_n    port map(data_bus,R7_out,clk,R7_en_in,rst);
-    IR:   register_n    port map(data_bus,IR_out,clk,IR_en_in,rst);
-    Temp: register_n    port map(data_bus,Temp_out,clk,Temp_en_in,rst);
-    Y:    register_n    port map(data_bus,Y_out,clk,Y_en_in,rst);
-	Z:    register_n    port map(Fout,Z_out,clk,Z_en_in,rst);
+    R0:   register_n    port map(data_bus,R0_out,clk_hlted,R0_en_in,rst);
+    R1:   register_n    port map(data_bus,R1_out,clk_hlted,R1_en_in,rst);
+    R2:   register_n    port map(data_bus,R2_out,clk_hlted,R2_en_in,rst);
+    R3:   register_n    port map(data_bus,R3_out,clk_hlted,R3_en_in,rst);
+    R4:   register_n    port map(data_bus,R4_out,clk_hlted,R4_en_in,rst);
+    R5:   register_n    port map(data_bus,R5_out,clk_hlted,R5_en_in,rst);
+    R6:   register_n    port map(data_bus,R6_out,clk_hlted,R6_en_in,rst);
+    R7:   register_n    port map(data_bus,R7_out,clk_hlted,R7_en_in,rst);
+    IR:   register_n    port map(data_bus,IR_out,clk_hlted,IR_en_in,rst);
+    Temp: register_n    port map(data_bus,Temp_out,clk_hlted,Temp_en_in,rst);
+    Y:    register_n    port map(data_bus,Y_out,clk_hlted,Y_en_in,rst);
+	Z:    register_n    port map(Fout,Z_out,clk_hlted,Z_en_in,rst);
 	
-	MDR:  register_MDR  port map(ram_data_out,data_bus,MDR_out,clk,memory_read_signal ,MDR_en_in ,rst);
+	MDR:  register_MDR  port map(ram_data_out,data_bus,MDR_out,clk_hlted,memory_read_signal ,MDR_en_in ,rst);
 	
-	MAR:  register_n    port map(data_bus,MAR_out,clk,MAR_en_in,rst);
+	MAR:  register_n    port map(data_bus,MAR_out,clk_hlted,MAR_en_in,rst);
 
 	Rom_out_register:  register_n generic map(32) port map(rom_out_inside , rom_data_out , not_clk ,'1' ,rst);
 
@@ -301,7 +306,7 @@ begin
 	Flags_in <= Carryout & SignF & ZeroF;
 
 	Flag_reg:   register_n   generic map (3)
-				port map(Flags_in,Flags_out ,clk,Flags_en,rst);
+				port map(Flags_in,Flags_out ,clk_hlted,Flags_en,rst);
 
 	our_ALU: ALU_n 	port map(Y_out, data_bus, F5_ALU_S, CF, Carryout, Fout);
 
@@ -398,4 +403,4 @@ end CPU_arch ;
 -- F(5) <= '00'
 -- F(4) <= '00'
 -- F(3) <= '00'
--- f(n-1 downto 0)<= ('0' & a(n-1 downto 1) ) 
+-- f(n-1 downto 0)<= ('0' & a(n-1 downto 1) )
